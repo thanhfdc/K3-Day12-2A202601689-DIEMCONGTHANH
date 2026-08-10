@@ -1,119 +1,75 @@
-# Phiếu Phản Ánh — K3 Ngày 12
+# Phieu Phan Anh - K3 Ngay 12
 
-> **Bài làm cá nhân.** Trả lời bằng lời của chính bạn, dựa trên những gì bạn
-> quan sát được khi chạy code — không sao chép đáp án của người khác.
->
-> Cách trả lời: thay dòng `> *Câu trả lời của bạn*` bằng câu trả lời.
-> `grade.py` đếm số câu đã trả lời (15 điểm cho 10 câu).
->
-> Họ và tên: ..........................  Mã học viên: ..........................
+Ho va ten: Diêm Công Thành 
+Ma hoc vien: 2A202601689
 
 ---
 
-### Câu 1 — Fail fast (CP1)
+### Cau 1 - Fail fast (CP1)
 
-Trong `Settings`, `agent_api_key` không có giá trị mặc định nên app chết ngay
-khi khởi động nếu thiếu biến môi trường. Hãy mô tả một tình huống cụ thể mà
-việc "chết sớm" này cứu bạn, so với việc để mặc định `"changeme"`.
-
-> *Câu trả lời của bạn*
+Neu deploy len cloud ma quen set `AGENT_API_KEY`, app dung ngay luc khoi dong se giup minh phat hien loi trong dashboard/log deploy. Neu de mac dinh `"changeme"`, service van chay cong khai va bat ky ai biet key mau do co the goi `/ask`, lam ton chi phi va kho phat hien hon.
 
 ---
 
-### Câu 2 — Log cho máy đọc (CP1)
+### Cau 2 - Log cho may doc (CP1)
 
-Chạy service và gọi `/ask` vài lần. Dán một dòng log JSON bạn thu được, rồi
-nêu **hai** việc bạn làm được với dòng log đó mà `print("đã trả lời xong")`
-không làm được.
+Vi du mot dong log:
 
-> *Câu trả lời của bạn*
-
----
-
-### Câu 3 — Kích thước image (CP2)
-
-Build cả hai phiên bản và ghi lại số đo thật:
-
-```bash
-docker build -f <Dockerfile-1-stage> -t agent:single .
-docker build -t agent:multi .
-docker images | grep agent
+```json
+{"event":"ask_completed","level":"info","timestamp":"2026-08-10T02:30:00+00:00","user_id":"sv01","tokens_in":12,"tokens_out":32,"cost_usd":0.0001}
 ```
 
-| Bản | Dung lượng |
+Voi log JSON nay minh co the loc theo `event` hoac `user_id` de xem ai dang goi API, va co the cong `cost_usd` de theo doi chi phi. `print("da tra loi xong")` khong co cau truc nen may kho dem, kho loc va kho canh bao.
+
+---
+
+### Cau 3 - Kich thuoc image (CP2)
+
+| Ban | Dung luong |
 |-----|-----------|
-| 1 stage (bản đầu) | ... MB |
-| Multi-stage | ... MB |
+| 1 stage ban dau | chua do duoc tren may nay vi khong co Docker |
+| Multi-stage | chua do duoc tren may nay vi khong co Docker |
 
-Giải thích: phần dung lượng chênh lệch đó là những gì?
-
-> *Câu trả lời của bạn*
+Phan chenh lech thuong den tu compiler, cache build, file tam va cac layer chi can cho qua trinh cai thu vien. Multi-stage chi copy ket qua cai dat sang runtime nen image cuoi nho va gon hon.
 
 ---
 
-### Câu 4 — Thứ tự lệnh trong Dockerfile (CP2)
+### Cau 4 - Thu tu lenh trong Dockerfile (CP2)
 
-Sửa một ký tự trong `app/main.py` rồi build lại. Với Dockerfile của bạn, những
-layer nào được dùng lại từ cache, layer nào phải chạy lại? Nếu bạn đặt
-`COPY . .` lên trước `RUN pip install` thì kết quả khác thế nào?
-
-> *Câu trả lời của bạn*
+Dockerfile hien tai copy `requirements.txt` va cai dependency truoc, sau do moi copy `app` va `utils`. Khi sua mot ky tu trong `app/main.py`, layer cai dependency van duoc dung lai tu cache, chi cac layer copy source va sau do phai chay lai. Neu dat `COPY . .` truoc `RUN pip install`, moi lan sua code Docker se mat cache tu som va cai lai toan bo thu vien.
 
 ---
 
-### Câu 5 — Vì sao không chạy bằng root (CP2)
+### Cau 5 - Vi sao khong chay bang root (CP2)
 
-Container mặc định chạy bằng root. Mô tả chuỗi sự kiện dẫn từ "một lỗ hổng
-trong code Python của bạn" tới "kẻ tấn công có quyền cao trên máy host", và
-lệnh `USER` cắt đứt chuỗi đó ở chỗ nào.
-
-> *Câu trả lời của bạn*
+Neu code Python co lo hong cho phep ghi file hoac chay lenh trong container, attacker se thuc thi lenh voi user dang chay process. Neu process la root, tac dong trong container lon hon va khi co them loi cau hinh volume/runtime thi co the anh huong toi host. Lenh `USER appuser` cat chuoi do bang cach ha quyen process xuong user thuong.
 
 ---
 
-### Câu 6 — Cửa sổ trượt (CP3)
+### Cau 6 - Cua so truot (CP3)
 
-Rate limit của bạn dùng sliding window 60 giây. Nếu thay bằng cách đếm theo
-phút đồng hồ (reset lúc giây 00), một người dùng có thể gửi tối đa bao nhiêu
-request trong 2 giây liên tiếp khi hạn mức là 10/phút? Giải thích cách đạt được
-con số đó.
-
-> *Câu trả lời của bạn*
+Neu dem theo phut dong ho voi han muc 10 request/phut, user co the gui 20 request trong 2 giay: 10 request o 10:00:59 va 10 request tiep theo o 10:01:01. Vi bo dem reset o giay 00, ca hai cum deu hop le tren giay to, nhung thuc te la burst rat manh.
 
 ---
 
-### Câu 7 — Rate limit và cost guard (CP3)
+### Cau 7 - Rate limit va cost guard (CP3)
 
-Hai cơ chế này khác nhau ở điểm nào? Cho một tình huống mà rate limit cho qua
-nhưng cost guard phải chặn, và một tình huống ngược lại.
-
-> *Câu trả lời của bạn*
+Rate limit gioi han toc do goi request, con cost guard gioi han tong chi phi trong thang. Mot user gui it request nhung moi request rat dai co the qua rate limit nhung bi cost guard chan. Nguoc lai, mot user chua ton nhieu tien nhung spam nhieu request nho trong 1 phut se bi rate limit chan truoc.
 
 ---
 
-### Câu 8 — /health khác /ready (CP4)
+### Cau 8 - /health khac /ready (CP4)
 
-Nếu gộp hai endpoint làm một và cho nó kiểm tra Redis, chuyện gì xảy ra với cụm
-3 container khi Redis mất kết nối 30 giây? Trả lời theo đúng thứ tự sự kiện.
-
-> *Câu trả lời của bạn*
+Neu gop `/health` va `/ready` thanh mot endpoint co kiem tra Redis, khi Redis mat ket noi 30 giay thi ca 3 container deu tra health 503. Orchestrator hieu nham process chet va restart ca 3 container. Restart khong sua duoc Redis, nen cum co the lap lai viec restart va lam su co nho thanh downtime lon hon.
 
 ---
 
-### Câu 9 — Stateless (CP4)
+### Cau 9 - Stateless (CP4)
 
-Chạy `docker compose up --scale agent=3` rồi gọi `/ask` nhiều lần với cùng một
-`X-User-Id`. Quan sát `history_length` trong response. Nếu lịch sử được lưu
-trong một dict Python thay vì Redis, bạn sẽ thấy con số đó thay đổi thế nào?
-
-> *Câu trả lời của bạn*
+Khi lich su luu trong Redis, `history_length` tang deu qua nhieu request cung `X-User-Id`, du request vao instance nao. Neu luu bang dict Python trong RAM, moi container co mot dict rieng nen so nay se nhay lung tung: co luc 0, co luc 2, co luc 4 tuy request roi vao container nao.
 
 ---
 
-### Câu 10 — Deploy thật (CP5)
+### Cau 10 - Deploy that (CP5)
 
-Ghi lại **một** lỗi bạn gặp khi deploy lên cloud (build fail, health check
-timeout, sai REDIS_URL, app không đọc `$PORT`...): thông báo lỗi là gì, bạn
-tìm ra nguyên nhân bằng cách nào, và sửa ra sao?
-
-> *Câu trả lời của bạn*
+Loi gap trong moi truong nay la khong co lenh `docker` trong PATH, nen khong the chay `docker compose up` truc tiep. Minh kiem tra bang PowerShell `docker --version` va thay command not found. Cach xu ly tam thoi la dung `REDIS_URL=fake://` de chay local fallback cho FastAPI, dong thoi van hoan thien Dockerfile va docker-compose de khi co Docker thi build/chay duoc.
